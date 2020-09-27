@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"../client"
+	"../db"
 	"../handler"
 	"../server"
 )
@@ -21,6 +22,8 @@ func init() {
 	flag.StringVar(&addr, "addr", ":8080", "tcp host:port to connect")
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
+
+	db.ConnSql()
 }
 
 func main() {

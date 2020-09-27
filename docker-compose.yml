@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+    golang:
+        build: .
+        ports:
+            - "8080:8080"
+        container_name: sushita
+        depends_on:
+            - mysql
+    # mysql のサービスを追加
+    mysql:
+        image: mysql:5.7.22
+        environment:
+            MYSQL_ROOT_PASSWORD: root_pass
+            MYSQL_USER: root # 使わないけど一応記述
+            MYSQL_PASSWORD: pass # 使わないけど一応記述
+            MYSQL_DATABASE: sushita # 使わないけど一応記述
+        container_name: mysql-container
+
+volumes:
+  mysql_data: 
+    driver: local
