@@ -70,6 +70,7 @@ func RankingGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetRanking(w http.ResponseWriter, r *http.Request) {
+	log.Println("アクセスが来ました！")
 	fmt.Fprintln(w, "サーバーからの書き込みです!!")
 
 }
