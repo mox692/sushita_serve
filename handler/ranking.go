@@ -2,10 +2,13 @@ package handler
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"text/template"
+
+	"github.com/mox692/sushita_serve/db"
 )
 
 type LineOfLog struct {
@@ -73,4 +76,41 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	log.Println("アクセスが来ました！")
 	fmt.Fprintln(w, "サーバーからの書き込みです!!")
 
+	userRankings, err := selectAllRankingData()
+	if err != nil {
+		log.Fatal("%s", err)
+	}
+
+	fmt.Fprintf(w, "一位の名前: %s", userRankings[0].UserName)
+
+}
+
+func selectAllRankingData() ([]*UserRanking, error) {
+	rows, err := db.Conn.Query("select * from user_score")
+	if err != nil {
+		return nil, fmt.Errorf(": %w", err)
+	}
+	return convertToRanking(rows)
+}
+
+func convertToRanking(rows *sql.Rows) ([]*UserRanking, error) {
+	userRankings := []*UserRanking{}
+
+	for rows.Next() {
+		userRanking := UserRanking{}
+		err := rows.Scan(&userRanking.ID, &userRanking.UserID, &userRanking.UserName, &userRanking.Score)
+		if err != nil {
+			return userRankings, fmt.Errorf(": %w", err)
+		}
+		userRankings = append(userRankings, &userRanking)
+	}
+
+	return userRankings, nil
+}
+
+type UserRanking struct {
+	ID       int
+	UserID   string
+	UserName string
+	Score    int
 }
