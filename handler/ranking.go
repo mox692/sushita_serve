@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"text/template"
 
-	"github.com/mox692/sushita_serve/db"
+	"sushita_serve/db"
 )
 
 type LineOfLog struct {
