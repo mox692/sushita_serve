@@ -1,7 +1,7 @@
 FROM golang
 
 # ソースをコピーする
-ADD . /go
+# ADD . /go
 
 
 # # プログラム実行
