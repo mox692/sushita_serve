@@ -25,6 +25,7 @@ services:
           MYSQL_USER: golang-test-user
           MYSQL_PASSWORD: golang-test-pass
         volumes: 
+            - ./db/init:/docker-entrypoint-initdb.d
             - go-data:/var/lib/mysql
 
 volumes:
