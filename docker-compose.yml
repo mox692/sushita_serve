@@ -10,8 +10,6 @@ services:
         container_name: golang-container
         environment:
             - "GOPATH=/go"
-        volumes:
-            - ./:/go/src/with_mysql
         tty: true
         depends_on:
             - mysql
