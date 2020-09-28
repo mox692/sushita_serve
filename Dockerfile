@@ -1,12 +1,17 @@
 FROM golang
 
-# ソースをコピーする
-# ADD . /go
+WORKDIR /go/src/github.com/mox692/sushita_serve
 
+ADD . $APP_PATH
 
-# # プログラム実行
-# CMD ["go","run","/go/sushita_serve/cmd/main.go"]
+ENV MYSQL_HOST="mysql" \
+    MYSQL_PORT="3306" \
+    MYSQL_USER="golang-test-user" \
+    MYSQL_PASSWORD="golang-test-pass" \
+    MYSQL_DATABASE="golang-test-database"
 
+RUN go get -u github.com/go-sql-driver/mysql
 
-# 8080 ポートを解放
+CMD ["go","run","./cmd/main.go"]
+
 EXPOSE 8080

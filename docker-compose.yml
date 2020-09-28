@@ -11,6 +11,8 @@ services:
         environment:
             - "GOPATH=/go"
         tty: true
+        volumes:
+            - ./:/go/src/github.com/mox692/sushita_serve
         depends_on:
             - mysql
     mysql:
@@ -19,11 +21,11 @@ services:
         ports:
             - 3306:3306
         environment:
-          MYSQL_ROOT_PASSWORD: root-pass
           MYSQL_DATABASE: golang-test-database
           MYSQL_USER: golang-test-user
           MYSQL_PASSWORD: golang-test-pass
         volumes: 
+            - ./db/init:/docker-entrypoint-initdb.d
             - go-data:/var/lib/mysql
 
 volumes:
