@@ -33,11 +33,11 @@ func getParamString(param string, defaultValue string) string {
 }
 
 func getConnectionString() string {
-	host := getParamString("MYSQL_DB_HOST", "localhost")
+	host := getParamString("MYSQL_DB_HOST", "mysql")
 	port := getParamString("MYSQL_PORT", "3306")
-	user := getParamString("MYSQL_USER", "root")
-	pass := getParamString("MYSQL_PASSWORD", "")
-	dbname := getParamString("MYSQL_DB", "todoList")
+	user := getParamString("MYSQL_USER", "golang-test-user")
+	pass := getParamString("MYSQL_PASSWORD", "golang-test-pass")
+	dbname := getParamString("MYSQL_DATABASE", "golang-test-database")
 	protocol := getParamString("MYSQL_PROTOCOL", "tcp")
 	dbargs := getParamString("MYSQL_DBARGS", " ")
 
