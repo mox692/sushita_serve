@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"../handler"
+	"github.com/mox692/sushita_serve/handler"
 )
 
 func Serve(addr string) {
