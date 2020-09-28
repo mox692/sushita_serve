@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mox692/sushita_serve/handler"
-	"github.com/mox692/sushita_serve/server"
+	"sushita_serve/handler"
+	"sushita_serve/server"
 )
 
 var (
