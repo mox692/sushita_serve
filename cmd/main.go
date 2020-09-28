@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	"../client"
-	"../db"
-	"../handler"
-	"../server"
+	"github.com/mox692/sushita_serve/client"
+	"github.com/mox692/sushita_serve/db"
+	"github.com/mox692/sushita_serve/handler"
+	"github.com/mox692/sushita_serve/server"
 )
 
 var (
@@ -23,7 +23,7 @@ func init() {
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 
-	db.ConnSql()
+	db.Init()
 }
 
 func main() {
