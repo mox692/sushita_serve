@@ -86,7 +86,7 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 }
 
 func selectAllRankingData() ([]*UserRanking, error) {
-	rows, err := db.Conn.Query("select * from user_score")
+	rows, err := db.Conn.Query("SELECT * FROM `golang-test-database`.user_score;")
 	if err != nil {
 		return nil, fmt.Errorf(": %w", err)
 	}

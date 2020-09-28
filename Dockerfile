@@ -2,8 +2,8 @@ FROM golang
 
 # ソースをコピーする
 # ADD . /go
-ENV $APP_PATH = /go/src/github.com/mox692/sushita_serve
-WORKDIR $APP_PATH
+# ENV $APP_PATH = /go/src/github.com/mox692/sushita_serve
+WORKDIR /go/src/github.com/mox692/sushita_serve
 
 ADD . $APP_PATH
 
