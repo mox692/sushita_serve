@@ -11,6 +11,7 @@ services:
         environment:
             - "GOPATH=/go"
         tty: true
+        # 開発中にかぎり,volume使用
         volumes:
             - ./:/go/src/github.com/mox692/sushita_serve
         depends_on:

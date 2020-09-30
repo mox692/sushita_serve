@@ -2,7 +2,7 @@ FROM golang
 
 WORKDIR /go/src/github.com/mox692/sushita_serve
 
-ADD . $APP_PATH
+ADD . /go/src/github.com/mox692/sushita_serve
 
 ENV MYSQL_HOST="mysql" \
     MYSQL_PORT="3306" \
