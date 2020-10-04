@@ -19,6 +19,12 @@ type LineOfLog struct {
 	Method      string
 	Body        string
 }
+type UserRanking struct {
+	ID       int
+	UserID   string
+	UserName string
+	Score    int
+}
 
 var TemplateOfLog = `
 Remote address:   {{.RemoteAddr}}
@@ -82,11 +88,10 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "一位の名前: %s", userRankings[0].UserName)
-
 }
 
 func selectAllRankingData() ([]*UserRanking, error) {
-	rows, err := db.Conn.Query("SELECT * FROM `golang-test-database`.user_score;")
+	rows, err := db.Conn.Query("SELECT * FROM .user_ranking;")
 	if err != nil {
 		return nil, fmt.Errorf(": %w", err)
 	}
@@ -106,11 +111,4 @@ func convertToRanking(rows *sql.Rows) ([]*UserRanking, error) {
 	}
 
 	return userRankings, nil
-}
-
-type UserRanking struct {
-	ID       int
-	UserID   string
-	UserName string
-	Score    int
 }

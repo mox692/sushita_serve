@@ -9,10 +9,9 @@ import (
 
 func Serve(addr string) {
 
-	/* ===== URLマッピングを行う ===== */
+	// routing
 	http.HandleFunc("/ranking", get(handler.GetRanking))
 
-	/* ===== サーバの起動 ===== */
 	log.Println("Server running...")
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
@@ -50,6 +49,8 @@ func httpMethod(apiFunc http.HandlerFunc, method string) http.HandlerFunc {
 
 		// 共通のレスポンスヘッダを設定
 		writer.Header().Add("Content-Type", "application/json")
+
+		//
 		apiFunc(writer, request)
 	}
 }
