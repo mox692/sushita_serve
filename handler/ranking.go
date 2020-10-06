@@ -75,7 +75,6 @@ func RankingGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf(bufline.String())
-	// handler.ServeHTTP(w, r)
 }
 
 func GetRanking(w http.ResponseWriter, r *http.Request) {
