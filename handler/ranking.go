@@ -27,8 +27,10 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	_, err := selectUserByToken(token)
 	if err != nil {
 		log.Fatal("%s", err)
+		fmt.Fprintf(w, "invalide token.\n", token)
+		return
 	}
-	fmt.Printf("token: %s\n", token)
+	fmt.Fprintf(w, "token: %s\n", token)
 
 	userRankings, err := selectAllRankingData()
 	if err != nil {
@@ -36,7 +38,7 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; i < len(userRankings); i++ {
-		fmt.Fprintf(w, "%d: %s\n", i+1, userRankings[0].UserName)
+		fmt.Fprintf(w, "%d: %s\n", i+1, userRankings[i].UserName)
 	}
 	// fmt.Fprintf(w, "1位の名前: %s\n", userRankings[0].UserName)
 	// fmt.Fprintf(w, "2位の名前: %s\n", userRankings[1].UserName)
@@ -73,9 +75,9 @@ func convertToUserRanking(row *sql.Row) (*UserRanking, error) {
 	err := row.Scan(&userRanking.ID, &userRanking.UserID, &userRanking.UserName, &userRanking.Score)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, err
 		}
 		return nil, xerrors.Errorf("row.Scan error: %w", err)
 	}
-	return &userRanking, nil
+	return &userRanking, err
 }
