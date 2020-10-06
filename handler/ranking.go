@@ -9,6 +9,8 @@ import (
 	"text/template"
 
 	"sushita_serve/db"
+
+	"golang.org/x/xerrors"
 )
 
 type LineOfLog struct {
@@ -81,12 +83,23 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	log.Println("アクセスが来ました！")
 	fmt.Fprintln(w, "サーバーからの書き込みです!!")
 
+	// ヘッダから取得したtokenを用いてuser認証
+	token := r.Header.Get("user-token")
+	_, err := selectUserByToken(token)
+	if err != nil {
+		log.Fatal("%s", err)
+		return
+	}
+	fmt.Printf("token: %s\n", token)
+
 	userRankings, err := selectAllRankingData()
 	if err != nil {
 		log.Fatal("%s", err)
+		return
 	}
 
-	fmt.Fprintf(w, "一位の名前: %s", userRankings[0].UserName)
+	fmt.Fprintf(w, "1位の名前: %s\n", userRankings[0].UserName)
+	fmt.Fprintf(w, "2位の名前: %s\n", userRankings[1].UserName)
 }
 
 func selectAllRankingData() ([]*UserRanking, error) {
@@ -99,7 +112,6 @@ func selectAllRankingData() ([]*UserRanking, error) {
 
 func convertToRanking(rows *sql.Rows) ([]*UserRanking, error) {
 	userRankings := []*UserRanking{}
-
 	for rows.Next() {
 		userRanking := UserRanking{}
 		err := rows.Scan(&userRanking.ID, &userRanking.UserID, &userRanking.UserName, &userRanking.Score)
@@ -108,6 +120,22 @@ func convertToRanking(rows *sql.Rows) ([]*UserRanking, error) {
 		}
 		userRankings = append(userRankings, &userRanking)
 	}
-
 	return userRankings, nil
+}
+
+func selectUserByToken(token string) (*UserRanking, error) {
+	row := db.Conn.QueryRow("select * from user_ranking where uesr_id = ?", token)
+	return convertToUserRanking(row)
+}
+
+func convertToUserRanking(row *sql.Row) (*UserRanking, error) {
+	userRanking := UserRanking{}
+	err := row.Scan(&userRanking.ID, &userRanking.UserID, &userRanking.UserName, &userRanking.Score)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, xerrors.Errorf("row.Scan error: %w", err)
+	}
+	return &userRanking, nil
 }
