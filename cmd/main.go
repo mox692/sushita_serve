@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"math/rand"
-	"net/http"
 	"time"
 
 	"sushita_serve/server"
@@ -27,11 +25,11 @@ func init() {
 
 func main() {
 	// http.HandleFunc("/ranking", handler.GetRanking)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		panic(err)
-	} else {
-		fmt.Println("listing to serve...")
-	}
+	// if err := http.ListenAndServe(":8080", nil); err != nil {
+	// 	panic(err)
+	// } else {
+	// 	fmt.Println("listing to serve...")
+	// }
 	server.Serve(addr)
 
 }
