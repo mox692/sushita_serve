@@ -44,6 +44,13 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "2位の名前: %s\n", userRankings[1].UserName)
 }
 
+func SetRanking(w http.ResponseWriter, r *http.Request) {
+	token := r.Header.Get("user-token")
+
+	// tokenを返す
+	fmt.Fprintf(w, token)
+}
+
 func selectAllRankingData() ([]*UserRanking, error) {
 	rows, err := db.Conn.Query("SELECT * FROM .user_ranking;")
 	if err != nil {
