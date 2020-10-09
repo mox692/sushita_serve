@@ -11,6 +11,7 @@ func Serve(addr string) {
 
 	// routing
 	http.HandleFunc("/ranking", get(handler.GetRanking))
+	http.HandleFunc("/ranking/set", get(handler.SetRanking))
 
 	log.Println("Server running...")
 	err := http.ListenAndServe(addr, nil)

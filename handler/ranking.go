@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -24,7 +25,7 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 
 	// ヘッダから取得したtokenを用いてuser認証
 	token := r.Header.Get("user-token")
-	_, err := selectUserByToken(token)
+	_, err := selectUserRankingByToken(token)
 	if err != nil {
 		log.Fatal("%s", err)
 		fmt.Fprintf(w, "invalide token.\n", token)
@@ -40,8 +41,40 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(userRankings); i++ {
 		fmt.Fprintf(w, "%d: %s\n", i+1, userRankings[i].UserName)
 	}
-	// fmt.Fprintf(w, "1位の名前: %s\n", userRankings[0].UserName)
-	// fmt.Fprintf(w, "2位の名前: %s\n", userRankings[1].UserName)
+}
+
+func SetRanking(w http.ResponseWriter, r *http.Request) {
+
+	// リクエストを確認
+	log.Printf("リクエストの表示です!!: %#v\n\n", r)
+	log.Printf("リクエストbodyの表示です!!: %#v\n\n", r.Body)
+
+	// デコード
+	var requestBody setRankingRequestBody
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		log.Fatalln("decode err")
+	}
+	log.Printf("デコード後のリクエストbodyの表示です!!: %#v", requestBody)
+
+	token := r.Header.Get("user-token")
+
+	// connection test
+	w.Write([]byte("dfsalj"))
+	fmt.Fprintf(w, token)
+
+	// tokenを使用して、dbに接続、対象userのレコードがすでに存在するか確認
+	_, err = selectUserRankingByToken(token)
+	// もし存在していなかったらinsert
+	if err != nil {
+		if err == sql.ErrNoRows {
+			requestBody.insertRankingDataByToken(token, &requestBody)
+		}
+		fmt.Errorf(" :%w", err)
+	} else {
+		requestBody.updateUserRankingByToken(token, &requestBody)
+	}
+	// もし存在していたらupdate
 }
 
 func selectAllRankingData() ([]*UserRanking, error) {
@@ -50,6 +83,14 @@ func selectAllRankingData() ([]*UserRanking, error) {
 		return nil, fmt.Errorf(": %w", err)
 	}
 	return convertToRanking(rows)
+}
+
+func (rb *setRankingRequestBody) insertRankingDataByToken(token string, requestBody *setRankingRequestBody) {
+
+}
+
+func (rb *setRankingRequestBody) updateUserRankingByToken(token string, requestBody *setRankingRequestBody) {
+
 }
 
 func convertToRanking(rows *sql.Rows) ([]*UserRanking, error) {
@@ -65,7 +106,7 @@ func convertToRanking(rows *sql.Rows) ([]*UserRanking, error) {
 	return userRankings, nil
 }
 
-func selectUserByToken(token string) (*UserRanking, error) {
+func selectUserRankingByToken(token string) (*UserRanking, error) {
 	row := db.Conn.QueryRow("select * from user_ranking where user_id = ?", token)
 	return convertToUserRanking(row)
 }
@@ -80,4 +121,9 @@ func convertToUserRanking(row *sql.Row) (*UserRanking, error) {
 		return nil, xerrors.Errorf("row.Scan error: %w", err)
 	}
 	return &userRanking, err
+}
+
+type setRankingRequestBody struct {
+	Name  string `json: "name"`
+	Score int    `json: "score"`
 }
