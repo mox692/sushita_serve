@@ -43,38 +43,47 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type setRankingRequestBody struct {
+	Name  string `json: "name"`
+	Score int    `json: "score"`
+}
+
 func SetRanking(w http.ResponseWriter, r *http.Request) {
 
-	// リクエストを確認
-	log.Printf("リクエストの表示です!!: %#v\n\n", r)
-	log.Printf("リクエストbodyの表示です!!: %#v\n\n", r.Body)
+	token := r.Header.Get("user-token")
 
-	// デコード
 	var requestBody setRankingRequestBody
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
 		log.Fatalln("decode err")
 	}
-	log.Printf("デコード後のリクエストbodyの表示です!!: %#v", requestBody)
 
-	token := r.Header.Get("user-token")
-
-	// connection test
-	w.Write([]byte("dfsalj"))
-	fmt.Fprintf(w, token)
-
-	// tokenを使用して、dbに接続、対象userのレコードがすでに存在するか確認
+	// Todo: logicを工夫して、db接続を減らす
 	_, err = selectUserRankingByToken(token)
-	// もし存在していなかったらinsert
 	if err != nil {
 		if err == sql.ErrNoRows {
-			requestBody.insertRankingDataByToken(token, &requestBody)
+			// !insertRankingDataByTokenが正常のときはerrにはnilが代入される
+			log.Println("doing insert...")
+			err = requestBody.insertRankingDataByToken(token)
 		}
 		fmt.Errorf(" :%w", err)
 	} else {
-		requestBody.updateUserRankingByToken(token, &requestBody)
+		log.Println("doing update...")
+		err = requestBody.updateUserRankingByToken(token)
 	}
-	// もし存在していたらupdate
+
+	// errをまとめて処理
+	if err != nil {
+		log.Fatalf(": %w", err)
+		return
+	}
+
+	// normal finish log
+	log.Printf("Completed normally!!")
+
+	// Todo: レスポンスに何が必要か。レスポンス用の構造体を作成
+	fmt.Fprintln(w, "サーバーからの書き込みです!!")
+
 }
 
 func selectAllRankingData() ([]*UserRanking, error) {
@@ -85,12 +94,28 @@ func selectAllRankingData() ([]*UserRanking, error) {
 	return convertToRanking(rows)
 }
 
-func (rb *setRankingRequestBody) insertRankingDataByToken(token string, requestBody *setRankingRequestBody) {
-
+func (rb *setRankingRequestBody) insertRankingDataByToken(token string) error {
+	stmt, err := db.Conn.Prepare("INSERT INTO user_ranking (user_id, user_name, score) VALUES (?, ?, ?);")
+	if err != nil {
+		return fmt.Errorf("db.Conn.Prepare err : %w", err)
+	}
+	_, err = stmt.Exec(token, rb.Name, rb.Score)
+	if err != nil {
+		return fmt.Errorf("stmt.Exec err : %w", err)
+	}
+	return nil
 }
 
-func (rb *setRankingRequestBody) updateUserRankingByToken(token string, requestBody *setRankingRequestBody) {
-
+func (rb *setRankingRequestBody) updateUserRankingByToken(token string) error {
+	stmt, err := db.Conn.Prepare("update user_ranking SET score = ? where id = ?")
+	if err != nil {
+		return xerrors.Errorf("db.Conn.Prepare error: %w", err)
+	}
+	_, err = stmt.Exec(rb.Score, token)
+	if err != nil {
+		return xerrors.Errorf("stmt.Exec error: %w", err)
+	}
+	return nil
 }
 
 func convertToRanking(rows *sql.Rows) ([]*UserRanking, error) {
@@ -121,9 +146,4 @@ func convertToUserRanking(row *sql.Row) (*UserRanking, error) {
 		return nil, xerrors.Errorf("row.Scan error: %w", err)
 	}
 	return &userRanking, err
-}
-
-type setRankingRequestBody struct {
-	Name  string `json: "name"`
-	Score int    `json: "score"`
 }
