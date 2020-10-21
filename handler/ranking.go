@@ -8,9 +8,15 @@ import (
 	"net/http"
 
 	"sushita_serve/db"
+	"sushita_serve/response"
 
 	"golang.org/x/xerrors"
 )
+
+type setRankingRequestBody struct {
+	Name  string `json: "name"`
+	Score int    `json: "score"`
+}
 
 type RankingHandler struct {
 	token          string
@@ -18,62 +24,65 @@ type RankingHandler struct {
 	db             *sql.DB
 }
 
-// rhの作成と、
 // リクエストからヘッダを取得し、構造体にセット
 // Todo: この関数もメソッド化してテストしやすくしたい。。
-func dealRanking(w http.ResponseWriter, r *http.Request) {
+// SetRankingじゃなくて、呼び出しもとから選択できるようにしたい。
+func HandleSetRanking(w http.ResponseWriter, r *http.Request) {
 	var requestBody setRankingRequestBody
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
-
+		response.ErrResponse(w, xerrors.Errorf(": %w", err), 500)
+		return
 	}
 	rh := &RankingHandler{
 		token:          r.Header.Get("user-token"),
 		setRequestBody: requestBody,
 		db:             db.Conn,
 	}
-	rh.SetRanking(w, r)
+	rh.setRanking(w, r)
 }
 
-func (rh *RankingHandler) GetRanking(w http.ResponseWriter, r *http.Request) {
-	log.Println("アクセスが来ました！")
-	fmt.Fprintln(w, "サーバーからの書き込みです!!")
-
-	// ヘッダから取得したtokenを用いてuser認証
-	token := r.Header.Get("user-token")
-	_, err := rh.selectUserRankingByToken(token)
+func HandleGetRanking(w http.ResponseWriter, r *http.Request) {
+	var requestBody setRankingRequestBody
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
-		// log.Fatal("%s", err)
-		// fmt.Fprintf(w, "invalide token.\n", token)
-		return
+		response.ErrResponse(w, xerrors.Errorf(": %w", err), 500)
 	}
-	fmt.Fprintf(w, "token: %s\n", token)
+	rh := &RankingHandler{
+		token:          r.Header.Get("user-token"),
+		setRequestBody: requestBody,
+		db:             db.Conn,
+	}
+	rh.getRanking(w, r)
+}
 
-	userRankings, err := selectAllRankingData()
+type rankingGetResponse struct {
+	userName string `json: "user_name"`
+	score    int    `json: "score"`
+}
+
+func (rh *RankingHandler) getRanking(w http.ResponseWriter, r *http.Request) {
+	userRankings, err := rh.selectAllRankingData()
 	if err != nil {
-		// log.Fatal("%s", err)
+		response.ErrResponse(w, xerrors.Errorf(": %w", err), 500)
 	}
-
 	for i := 0; i < len(userRankings); i++ {
 		fmt.Fprintf(w, "%d: %s\n", i+1, userRankings[i].UserName)
 	}
+
+	responseDatas := []*rankingGetResponse{}
+
+	for _, v := range userRankings {
+		responseData := rankingGetResponse{}
+		responseData.userName = v.UserName
+		responseData.score = v.Score
+		responseDatas = append(responseDatas, &responseData)
+	}
+
+	response.SuccessResponse(w, responseDatas)
 }
 
-type setRankingRequestBody struct {
-	Name  string `json: "name"`
-	Score int    `json: "score"`
-}
-
-func (rh *RankingHandler) SetRanking(w http.ResponseWriter, r *http.Request) {
-
-	// token := r.Header.Get("user-token")
-
-	// var requestBody setRankingRequestBody
-	// err := json.NewDecoder(r.Body).Decode(&requestBody)
-	// if err != nil {
-	// 	log.Fatalln("decode err")
-	// }
-
+func (rh *RankingHandler) setRanking(w http.ResponseWriter, r *http.Request) {
 	// Todo: logicを工夫して、db接続を減らす
 	_, err := rh.selectUserRankingByToken(rh.token)
 	if err != nil {
@@ -90,22 +99,21 @@ func (rh *RankingHandler) SetRanking(w http.ResponseWriter, r *http.Request) {
 
 	// errをまとめて処理
 	if err != nil {
-		fmt.Printf("errです！%+v", err)
+		response.ErrResponse(w, xerrors.Errorf(": %w", err), 500)
 		return
 	}
 
 	// normal finish log
 	log.Printf("Completed normally!!")
 
-	// Todo: レスポンスに何が必要か。レスポンス用の構造体を作成
-	fmt.Fprintln(w, "サーバーからの書き込みです!!")
+	fmt.Fprintln(w, "Your score just has been registered in the server!")
 
 }
 
-func selectAllRankingData() ([]*db.UserRanking, error) {
-	rows, err := db.Conn.Query("SELECT * FROM .user_ranking;")
+func (rh *RankingHandler) selectAllRankingData() ([]*db.UserRanking, error) {
+	rows, err := rh.db.Query("SELECT * FROM .user_ranking;")
 	if err != nil {
-		return nil, fmt.Errorf(": %w", err)
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	return convertToRanking(rows)
 }
@@ -113,11 +121,11 @@ func selectAllRankingData() ([]*db.UserRanking, error) {
 func (rh *RankingHandler) insertRankingDataByToken(token string) error {
 	stmt, err := rh.db.Prepare("INSERT INTO user_ranking (user_id, user_name, score) VALUES (?, ?, ?);")
 	if err != nil {
-		return fmt.Errorf("db.Conn.Prepare err : %w", err)
+		return xerrors.Errorf(": %w", err)
 	}
 	_, err = stmt.Exec(token, rh.setRequestBody.Name, rh.setRequestBody.Score)
 	if err != nil {
-		return fmt.Errorf("stmt.Exec err : %w", err)
+		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
@@ -140,7 +148,7 @@ func convertToRanking(rows *sql.Rows) ([]*db.UserRanking, error) {
 		userRanking := db.UserRanking{}
 		err := rows.Scan(&userRanking.ID, &userRanking.UserID, &userRanking.UserName, &userRanking.Score)
 		if err != nil {
-			return userRankings, fmt.Errorf(": %w", err)
+			return userRankings, xerrors.Errorf(": %w", err)
 		}
 		userRankings = append(userRankings, &userRanking)
 	}
@@ -157,9 +165,9 @@ func convertToUserRanking(row *sql.Row) (*db.UserRanking, error) {
 	err := row.Scan(&userRanking.ID, &userRanking.UserID, &userRanking.UserName, &userRanking.Score)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, err
+			return nil, xerrors.Errorf(": %w", err)
 		}
 		return nil, xerrors.Errorf("row.Scan error: %w", err)
 	}
-	return &userRanking, err
+	return &userRanking, nil
 }
