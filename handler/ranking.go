@@ -19,12 +19,6 @@ type LineOfLog struct {
 	Method      string
 	Body        string
 }
-type UserRanking struct {
-	ID       int
-	UserID   string
-	UserName string
-	Score    int
-}
 
 var TemplateOfLog = `
 Remote address:   {{.RemoteAddr}}
@@ -89,7 +83,7 @@ func GetRanking(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "一位の名前: %s", userRankings[0].UserName)
 }
 
-func selectAllRankingData() ([]*UserRanking, error) {
+func selectAllRankingData() ([]*db.UserRanking, error) {
 	rows, err := db.Conn.Query("SELECT * FROM .user_ranking;")
 	if err != nil {
 		return nil, fmt.Errorf(": %w", err)
@@ -97,11 +91,11 @@ func selectAllRankingData() ([]*UserRanking, error) {
 	return convertToRanking(rows)
 }
 
-func convertToRanking(rows *sql.Rows) ([]*UserRanking, error) {
-	userRankings := []*UserRanking{}
+func convertToRanking(rows *sql.Rows) ([]*db.UserRanking, error) {
+	userRankings := []*db.UserRanking{}
 
 	for rows.Next() {
-		userRanking := UserRanking{}
+		userRanking := db.UserRanking{}
 		err := rows.Scan(&userRanking.ID, &userRanking.UserID, &userRanking.UserName, &userRanking.Score)
 		if err != nil {
 			return userRankings, fmt.Errorf(": %w", err)
