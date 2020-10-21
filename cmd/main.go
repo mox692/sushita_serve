@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"sushita_serve/server"
-
-	"google.golang.org/appengine"
 )
 
 var (
@@ -16,10 +14,8 @@ var (
 )
 
 func init() {
-	if !(appengine.IsAppEngine()) {
-		flag.StringVar(&addr, "addr", ":8080", "tcp host:port to connect")
-		flag.Parse()
-	}
+	flag.StringVar(&addr, "addr", ":8080", "tcp host:port to connect")
+	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 }
 
