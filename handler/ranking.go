@@ -43,39 +43,40 @@ func HandleSetRanking(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleGetRanking(w http.ResponseWriter, r *http.Request) {
-	var requestBody setRankingRequestBody
-	err := json.NewDecoder(r.Body).Decode(&requestBody)
-	if err != nil {
-		response.ErrResponse(w, xerrors.Errorf(": %w", err), 500)
-	}
+	// ここでerr
+	// err := json.NewDecoder(r.Body).Decode(&requestBody)
+
+	// if err != nil {
+	// 	response.ErrResponse(w, xerrors.Errorf(": %w", err), 500)
+	// 	return
+	// }
 	rh := &RankingHandler{
-		token:          r.Header.Get("user-token"),
-		setRequestBody: requestBody,
-		db:             db.Conn,
+		token: r.Header.Get("user-token"),
+		db:    db.Conn,
 	}
 	rh.getRanking(w, r)
 }
 
 type rankingGetResponse struct {
-	userName string `json: "user_name"`
-	score    int    `json: "score"`
+	UserName string `json: "user_name"`
+	Score    int    `json: "score"`
+	Ranking  int    `ranknig: "ranking"`
 }
 
 func (rh *RankingHandler) getRanking(w http.ResponseWriter, r *http.Request) {
 	userRankings, err := rh.selectAllRankingData()
 	if err != nil {
 		response.ErrResponse(w, xerrors.Errorf(": %w", err), 500)
-	}
-	for i := 0; i < len(userRankings); i++ {
-		fmt.Fprintf(w, "%d: %s\n", i+1, userRankings[i].UserName)
+		return
 	}
 
 	responseDatas := []*rankingGetResponse{}
 
-	for _, v := range userRankings {
+	for i, v := range userRankings {
 		responseData := rankingGetResponse{}
-		responseData.userName = v.UserName
-		responseData.score = v.Score
+		responseData.UserName = v.UserName
+		responseData.Score = v.Score
+		responseData.Ranking = i + 1
 		responseDatas = append(responseDatas, &responseData)
 	}
 
@@ -87,11 +88,9 @@ func (rh *RankingHandler) setRanking(w http.ResponseWriter, r *http.Request) {
 	_, err := rh.selectUserRankingByToken(rh.token)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// !insertRankingDataByTokenが正常のときはerrにはnilが代入される
 			log.Println("doing insert...")
 			err = rh.insertRankingDataByToken(rh.token)
 		}
-		fmt.Printf("%+v\n", err)
 	} else {
 		log.Println("doing update...")
 		err = rh.updateUserRankingByToken(rh.token)
@@ -165,7 +164,7 @@ func convertToUserRanking(row *sql.Row) (*db.UserRanking, error) {
 	err := row.Scan(&userRanking.ID, &userRanking.UserID, &userRanking.UserName, &userRanking.Score)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err // No wrap!!
 		}
 		return nil, xerrors.Errorf("row.Scan error: %w", err)
 	}

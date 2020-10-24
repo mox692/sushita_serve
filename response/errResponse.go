@@ -16,7 +16,6 @@ func ErrResponse(w http.ResponseWriter, err error, code int) {
 }
 
 func writeErr(w http.ResponseWriter, err error, code int) {
-	fmt.Printf("%+v\n", err)
+	fmt.Fprintf(w, "%+v\n", err)
 	w.WriteHeader(code)
-	w.Write([]byte(err.Error()))
 }
